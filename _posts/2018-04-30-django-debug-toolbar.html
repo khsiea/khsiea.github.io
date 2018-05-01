@@ -6,4 +6,128 @@ date: 2018-04-30 01:00:00
 background: '/img/posts/01.jpg'
 ---
 
-<h1>django-debug-toolbar</h1>
+<h1>장고 웹 개발에 있어서 유용한 디버그 툴에 대해서 소개를 하려고 합니다.</h1>
+django-debug-toolbar 입니다.
+디버그 할 때 도움을 주는 패키지 입니다. 
+참고 사이트 : https://django-debug-toolbar.readthedocs.io/en/stable/installation.html
+<ol>
+  <li>
+    <h4>설치하기</h4>
+    <div>pip install django-debug-toolbar</div>
+  </li>
+  <li>
+
+      <h4>셋팅하기</h4>
+      <div>설치 후 settings.py 파일에 디버그 툴바 설정을 해주어야 합니다.</div>
+      
+      <ol>
+        <li>
+          <h5>INSTALLED_APPS 추가</h5>
+          <div>
+            INSTALLED_APPS에 debug_toolbar를 추가해주고
+            (debug_toolbar는 static filse를 이용합니다.
+            django.contrib.staticfiles이 추가 되어 있는지 확인 합니다.)
+          </div>
+          <pre><code>
+INSTALLED_APPS = [
+    # ...
+    'django.contrib.staticfiles',
+    # ...
+    'debug_toolbar',
+]
+          </code></pre>
+        </li>
+
+        <li>
+          <h5>MIDDLEWARE 추가</h5>
+          <div>에 디버그 툴바 middleware를 추가합니다.</div>
+          <pre><code>
+MIDDLEWARE = [
+    # ...
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
+    # ...
+]
+          </code></pre>
+        </li>
+
+        <li>
+          <h5>INTERNAL_IPS에 설정</h5>
+          <div>디버그 툴은 INTERNAL_IPS에 설정된 주소에서만 보이기 때문에 INTERNAL_IPS를 설정해줍니다.</div>
+          <pre><code>
+INTERNAL_IPS = ('127.0.0.1',)
+          </code></pre>
+        </li>
+        <li>
+            <h5>urls.py에 디버그 툴바 URL을 추가</h5>
+            <div>urls.py에 디버그 툴바의 URL을 추가 합니다.</div>
+            
+            <pre><code>
+from django.conf import settings
+from django.conf.urls import include, url
+
+if settings.DEBUG:
+    import debug_toolbar
+    urlpatterns = [
+        url(r'^__debug__/', include(debug_toolbar.urls)),
+    ] + urlpatterns
+            </code></pre>
+        </li>
+      </ol>
+  </li>
+  
+  <li>
+    <h4>실행하기</h4>
+    <div>설정이 끝나고 실행을 해보면 다음과 같이 툴바가 보입니다.</div>
+  </li>
+</ol>
+
+<hr/>
+<div>
+    하지만 JsonResponse에서는 디버그 툴바가 보이지 않습니다. 
+    이를 해결하기 위해서 middleware를 추가 구현하여 주면 됩니다.    
+</div>
+
+<pre><code>
+from django.utils.deprecation import MiddlewareMixin
+from django.http import HttpResponse
+import json
+
+class NonHtmlDebugToolbarMiddleware(MiddlewareMixin):
+    def process_response(self, request, response):
+
+        debug = request.GET.get('debug', 'UNSET')
+
+        if debug != 'UNSET':
+            if response['Content-Type'] == 'application/octet-stream':
+                new_content = '<html><body>Binary Data, Length: {}</body></html>'.format(len(response.content))
+
+                response = HttpResponse(new_content)
+
+            elif response['Content-Type'] != 'text/html':
+                content = response.content
+
+                try:
+                    json_ = json.loads(content)
+                    content = json.dumps(json_, sort_keys=True, indent=2)
+
+                except ValueError:
+                    pass
+
+                response = HttpResponse('<html><body><pre>{}</pre></body></html>'.format(content))
+
+        return response
+</code></pre>
+
+<div>그리고 만든 middleware를 settings에 추가합니다.</div>
+<pre><code>
+MIDDLEWARE = [
+    # ...
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'path.to.NonHtmlDebugToolbarMiddleware',
+    # ...
+]
+</code></pre>
+
+<div>그리고 request에 debug get query를 주면 다음과 같이 다시 디버그 툴을 볼 수 있습니다.</div>
+
+<div>수정할 사항이나 틀린 부분은 언제든지 말씀해주세요.</div>
