@@ -7,24 +7,31 @@ background: '/img/posts/01.jpg'
 ---
 
 <h1>장고 웹 개발에 있어서 유용한 디버그 툴에 대해서 소개를 하려고 합니다.</h1>
-django-debug-toolbar 입니다.
-디버그 할 때 도움을 주는 패키지 입니다. 
-참고 사이트 : https://django-debug-toolbar.readthedocs.io/en/stable/installation.html
+<div>django-debug-toolbar 입니다.</div>
+<div>django-debug-toolbar 사이트 : https://django-debug-toolbar.readthedocs.io/en/stable/installation.html</div>
+
+
 <ol>
+
+  <br/>
   <li>
     <h4>설치하기</h4>
     <div>pip install django-debug-toolbar</div>
+    <img class="img-fluid" src="/img/posts/django-debug-toolbar/install.png" alt="install-django-debug-toolbar">
   </li>
+  
+  <br/>
   <li>
-
       <h4>셋팅하기</h4>
       <div>설치 후 settings.py 파일에 디버그 툴바 설정을 해주어야 합니다.</div>
       
       <ol>
+
+        <br/>
         <li>
           <h5>INSTALLED_APPS 추가</h5>
           <div>
-            INSTALLED_APPS에 debug_toolbar를 추가해주고
+            INSTALLED_APPS에 debug_toolbar를 추가합니다.
             (debug_toolbar는 static filse를 이용합니다.
             django.contrib.staticfiles이 추가 되어 있는지 확인 합니다.)
           </div>
@@ -36,8 +43,10 @@ INSTALLED_APPS = [
     'debug_toolbar',
 ]
           </code></pre>
+          <img class="img-fluid" src="/img/posts/django-debug-toolbar/add-installed-apps.png" alt="add-installed-apps">
         </li>
-
+        
+        <br/>
         <li>
           <h5>MIDDLEWARE 추가</h5>
           <div>에 디버그 툴바 middleware를 추가합니다.</div>
@@ -48,15 +57,20 @@ MIDDLEWARE = [
     # ...
 ]
           </code></pre>
+          <img class="img-fluid" src="/img/posts/django-debug-toolbar/add-middleware.png" alt="add-middleware">
         </li>
 
+        <br/>
         <li>
           <h5>INTERNAL_IPS에 설정</h5>
           <div>디버그 툴은 INTERNAL_IPS에 설정된 주소에서만 보이기 때문에 INTERNAL_IPS를 설정해줍니다.</div>
           <pre><code>
 INTERNAL_IPS = ('127.0.0.1',)
           </code></pre>
+          <img class="img-fluid" src="/img/posts/django-debug-toolbar/setting-internal-ips.png" alt="setting-internal-ips">
         </li>
+
+        <br/>
         <li>
             <h5>urls.py에 디버그 툴바 URL을 추가</h5>
             <div>urls.py에 디버그 툴바의 URL을 추가 합니다.</div>
@@ -71,23 +85,30 @@ if settings.DEBUG:
         url(r'^__debug__/', include(debug_toolbar.urls)),
     ] + urlpatterns
             </code></pre>
+            <img class="img-fluid" src="/img/posts/django-debug-toolbar/add-urls.py.png" alt="add-urls.py">
         </li>
       </ol>
   </li>
   
+  <br/>
   <li>
     <h4>실행하기</h4>
     <div>설정이 끝나고 실행을 해보면 다음과 같이 툴바가 보입니다.</div>
+    <img class="img-fluid" src="/img/posts/django-debug-toolbar/result.png" alt="result">
+    <img class="img-fluid" src="/img/posts/django-debug-toolbar/result-detail.png" alt="result-detail">
   </li>
 </ol>
 
 <hr/>
 <div>
     하지만 JsonResponse에서는 디버그 툴바가 보이지 않습니다. 
-    이를 해결하기 위해서 middleware를 추가 구현하여 주면 됩니다.    
 </div>
+<img class="img-fluid" src="/img/posts/django-debug-toolbar/json-response-code.png" alt="json-response-code">
+<img class="img-fluid" src="/img/posts/django-debug-toolbar/json-no-debug-toolbar.png" alt="json-no-debug-toolbar">
 
+<div>이를 해결하기 위해서 middleware를 추가 구현하여 주면 됩니다.</div>
 <pre><code>
+{% highlight html %}
 from django.utils.deprecation import MiddlewareMixin
 from django.http import HttpResponse
 import json
@@ -116,7 +137,9 @@ class NonHtmlDebugToolbarMiddleware(MiddlewareMixin):
                 response = HttpResponse('<html><body><pre>{}</pre></body></html>'.format(content))
 
         return response
+{% endhighlight %}
 </code></pre>
+<img class="img-fluid" src="/img/posts/django-debug-toolbar/custom-middleware.png" alt="custom-middleware">
 
 <div>그리고 만든 middleware를 settings에 추가합니다.</div>
 <pre><code>
@@ -127,7 +150,9 @@ MIDDLEWARE = [
     # ...
 ]
 </code></pre>
+<img class="img-fluid" src="/img/posts/django-debug-toolbar/custom-middleware-add.png" alt="add-custom-middleware">
 
 <div>그리고 request에 debug get query를 주면 다음과 같이 다시 디버그 툴을 볼 수 있습니다.</div>
+<img class="img-fluid" src="/img/posts/django-debug-toolbar/json-response-result.png" alt="json-response-result">
 
 <div>수정할 사항이나 틀린 부분은 언제든지 말씀해주세요.</div>
